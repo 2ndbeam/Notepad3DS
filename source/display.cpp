@@ -37,6 +37,8 @@ void print_instructions() {
     printf("Press R to search file\n");
     printf("Hold L to jump to top/end with up/down\n");
     printf("Press DPad or CPad to move up/down\n");
+    printf("Press DPad Left to create a new line\n");
+    printf("Press DPad Right to remove line\n");
 	printf("Press START to exit\n");
 }
 

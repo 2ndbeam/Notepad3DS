@@ -10,7 +10,7 @@
 #define BUFFER_SIZE 1025    //Notepad's line limit + \0
 #define MAX_BOTTOM_SIZE 28
 
-#define VERSION "Notepad3DS Version 1.1.2"
+#define VERSION "Notepad3DS Version 1.1.3"
 
 
 PrintConsole topScreen, bottomScreen;
@@ -79,6 +79,26 @@ int main(int argc, char **argv)
             button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
         }
 
+        if (kDown & KEY_DLEFT) {
+            if (curr_line < file.lines.size()) {
+                auto line = file.lines.begin();
+                advance(line, curr_line + 1);
+                file.lines.insert(line, std::vector<char>{'\n'});
+                curr_line++;
+                update_screen(file, curr_line);
+            }
+        }
+
+        if (kDown & KEY_DRIGHT) {
+            if (curr_line < file.lines.size()) {
+                auto line = file.lines.begin();
+                if (curr_line > 0)
+                    advance(line, curr_line);
+                file.lines.erase(line);
+                update_screen(file, curr_line);
+            }
+        }
+
         if (kDown & KEY_B) {
             //Create new file
             
@@ -120,12 +140,7 @@ int main(int argc, char **argv)
 
         }
 
-        if (kHeld & KEY_L) {
-            //If held, allows for jumping to end and start of file
-            fast_scroll = true;
-        } else {
-            fast_scroll = false;
-        }
+        fast_scroll = (kHeld & KEY_L);
 
         if (kDown & KEY_X) {
             //Save current file
