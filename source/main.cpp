@@ -6,21 +6,23 @@
 #include "file.h"
 #include "display.h"
 #include "file_io.h"
+#include "config.h"
 
 #define BUFFER_SIZE 1025    //Notepad's line limit + \0
 #define MAX_BOTTOM_SIZE 28
 
-#define VERSION "Notepad3DS Version 1.1.4"
-
+#define VERSION "Notepad3DS Version 1.1.5"
 
 PrintConsole topScreen, bottomScreen;
 int scroll = 0;
 bool fast_scroll = false;
 
-void move_down(File file);
-void move_up(File file);
+void move_down(File file, Config* cfg);
+void move_up(File file, Config* cfg);
 
 unsigned int curr_line = 0;
+
+Config cfg;
 
 int main(int argc, char **argv)
 {
@@ -28,6 +30,30 @@ int main(int argc, char **argv)
 	consoleInit(GFX_TOP, &topScreen);
     consoleInit(GFX_BOTTOM, &bottomScreen);
     consoleSelect(&bottomScreen);
+
+    std::string err_msg;
+
+    load_config(&cfg, &err_msg);
+
+    // Show error if something happened
+    if (err_msg != "")
+    {
+        consoleSelect(&bottomScreen);
+        printf(SCREEN_START_POINT);
+        std::cout << err_msg << std::endl << "Press any key to exit." << std::endl;
+        while (aptMainLoop())
+        {
+            hidScanInput();
+
+		    u32 kDown = hidKeysDown();
+
+            if (kDown)
+                break;
+        }
+        gfxExit();
+	    return 0;
+    }
+
     //Software keyboard thanks to fincs
     print_instructions();
 
@@ -35,7 +61,7 @@ int main(int argc, char **argv)
     
     File file;      //Use as default file
 
-    update_screen(file, curr_line);
+    update_screen(file, curr_line, &cfg);
 
 	while (aptMainLoop())
 	{
@@ -85,7 +111,7 @@ int main(int argc, char **argv)
                 advance(line, curr_line + 1);
                 file.lines.insert(line, std::vector<char>{'\n'});
                 curr_line++;
-                update_screen(file, curr_line);
+                update_screen(file, curr_line, &cfg);
             }
         }
 
@@ -95,7 +121,7 @@ int main(int argc, char **argv)
                 if (curr_line > 0)
                     advance(line, curr_line);
                 file.lines.erase(line);
-                update_screen(file, curr_line);
+                update_screen(file, curr_line, &cfg);
             }
         }
 
@@ -112,7 +138,7 @@ int main(int argc, char **argv)
                 file = blankFile;
                 curr_line = 0;
                 scroll = 0;
-                update_screen(file, curr_line);
+                update_screen(file, curr_line, &cfg);
                 print_save_status("New file created");
             } else
                 print_save_status("No new file created");
@@ -135,7 +161,7 @@ int main(int argc, char **argv)
                 if (curr_line > MAX_BOTTOM_SIZE) {
                     scroll = curr_line - MAX_BOTTOM_SIZE;
                 }
-                update_screen(file, curr_line);
+                update_screen(file, curr_line, &cfg);
             }   
 
         }
@@ -188,7 +214,7 @@ int main(int argc, char **argv)
             
             //print functions here seem to crash the program
             if (file.read_success) {
-                update_screen(file, curr_line);
+                update_screen(file, curr_line, &cfg);
                 clear_save_status();
                 std::cout << "Successfully opened " << filename << std::endl;
                 clear_directory_status();
@@ -198,7 +224,7 @@ int main(int argc, char **argv)
                 //print_save_status("Successfully opened " + filename);
             } else {
                 file = oldfile;
-                update_screen(file, curr_line);
+                update_screen(file, curr_line, &cfg);
                 clear_save_status();
                 std::cout << "Failed to open " << filename << std::endl;
                 consoleSelect(&topScreen);
@@ -208,24 +234,24 @@ int main(int argc, char **argv)
 
         if (kDown & KEY_DDOWN) {
             //Move a line down (towards bottom of screen)
-            move_down(file); 
+            move_down(file, &cfg); 
         }
 
         if (kHeld & KEY_CPAD_DOWN) {
             //Move a line down (towards bottom of screen)
             //as long as down is held
-            move_down(file); 
+            move_down(file, &cfg); 
         }
         if (kDown & KEY_DUP) {
             //Move a line up (towards top of screen)
-            move_up(file);
+            move_up(file, &cfg);
         }
 
 
         if (kHeld & KEY_CPAD_UP) {
             //Move a line up (towards top of screen)
             //as long as up is held
-            move_up(file);
+            move_up(file, &cfg);
         }
 
 
@@ -241,7 +267,7 @@ int main(int argc, char **argv)
                 } else {
                     file.edit_line(new_text, curr_line);
                 }
-                update_screen(file, curr_line);
+                update_screen(file, curr_line, &cfg);
 			} else
 				printf("swkbd event: %d\n", swkbdGetResult(&swkbd));
 		}
@@ -257,7 +283,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void move_down(File file) {
+void move_down(File file, Config* cfg) {
     //Move a line down (towards bottom of screen)
     if (curr_line < file.lines.size() - 1) {
         if (fast_scroll) {
@@ -273,12 +299,12 @@ void move_down(File file) {
                 curr_line++;
             }
         }
-        update_screen(file, curr_line);
+        update_screen(file, curr_line, cfg);
     }
 
 }
 
-void move_up(File file) {
+void move_up(File file, Config* cfg) {
     //Move a line up (towards top of screen)
 
     if (curr_line != 0) {
@@ -294,6 +320,6 @@ void move_up(File file) {
                 scroll--;
             }
         }
-        update_screen(file, curr_line);
+        update_screen(file, curr_line, cfg);
     }
 }

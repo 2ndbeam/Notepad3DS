@@ -1,6 +1,7 @@
 #pragma once
 
 #include "file.h"
+#include "config.h"
 #include <3ds.h>
 #include <string>
 
@@ -24,7 +25,7 @@ extern int scroll;
 void clear_screen();
 
 //Updates current selected screen with contents of file
-void update_screen(File& file, unsigned int current_line);
+void update_screen(File& file, unsigned int current_line, Config* cfg);
 
 void print_text(const char* str, unsigned int count, unsigned int selected_line);
 
@@ -41,4 +42,8 @@ void print_instructions();
 
 void print_version(std::string version);
 
+void print_commands_help();
+
 std::string char_vec_to_string(std::vector<char>& line);
+
+std::string char_vec_to_string_counted(std::vector<char>& line, unsigned int curr_line);

@@ -1,0 +1,3 @@
+# Notepad3DS config. Should lie next to .3dsx
+[general]
+show_line_number = true

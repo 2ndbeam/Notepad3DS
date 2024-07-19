@@ -4,6 +4,7 @@
 #include <iterator>
 #include <stdio.h>
 #include <math.h>
+
 void clear_screen() {
     consoleSelect(&topScreen);
     //Cursor to top left
@@ -27,6 +28,12 @@ void print_version(std::string version) {
     std::cout << version << std::endl;
 }
 
+// WIP yet
+void print_commands_help() {
+    clear_screen();
+    printf("\n");
+}
+
 void print_instructions() {
     consoleSelect(&bottomScreen);
     printf(INSTRUCTION_LINE);
@@ -47,6 +54,7 @@ std::string char_vec_to_string(std::vector<char>& line) {
 
                 std::string temp_str = "";
                 int letters = 0;
+
                 for (const auto& ch : line) {
                     if (letters != MAX_WIDTH) {
                         //Store characters to display
@@ -59,6 +67,19 @@ std::string char_vec_to_string(std::vector<char>& line) {
                     }
                 }
                 return temp_str;
+}
+
+std::string char_vec_to_string_counted(std::vector<char>& line, unsigned int curr_line) {
+    std::string temp_str(std::to_string(curr_line) + '|');
+    temp_str.append(char_vec_to_string(line));
+    
+    while (temp_str.length() > MAX_WIDTH) {
+        temp_str.pop_back();
+    }
+    
+    temp_str.push_back('\n');
+    
+    return temp_str;
 }
 
 void print_text(const char* str, unsigned int count, unsigned int selected_line) {
@@ -110,18 +131,28 @@ void print_directory_status(std::string filename) {
 
 }
 
-void update_screen(File& file, unsigned int current_line) {
+void update_screen(File& file, unsigned int current_line, Config* cfg) {
     clear_screen();
     consoleSelect(&bottomScreen);
     print_line_status(current_line);
     consoleSelect(&topScreen);
     unsigned int count = 0;
     
+    std::string temp;
+
     //No scrolling needed
     if (file.lines.size() - 1 <= MAX_LINES) {
         for (auto iter = file.lines.begin(); iter != file.lines.end(); iter++) {
             //Print everything in the vector<char> that iterator points to
-            std::string temp = char_vec_to_string(*iter);
+
+            
+            
+            if (cfg->show_line_number) {
+                temp = char_vec_to_string_counted(*iter, current_line);
+            } else {
+                temp = char_vec_to_string(*iter);
+            }
+
             const char* str_to_print = temp.c_str();
             print_text(str_to_print, count, current_line);
             count++;
@@ -144,7 +175,11 @@ void update_screen(File& file, unsigned int current_line) {
                 iter = file.lines.begin();
                 advance(iter, line);
                 
-                std::string temp = char_vec_to_string(*iter);
+                if (cfg->show_line_number) {
+                    temp = char_vec_to_string_counted(*iter, current_line);
+                } else {
+                    temp = char_vec_to_string(*iter);
+                }
                 const char* str_to_print = temp.c_str();
                 print_text(str_to_print, count, current_line);
                 count++;
@@ -152,11 +187,14 @@ void update_screen(File& file, unsigned int current_line) {
             
         } else {
             for (int line = scroll; line <= MAX_LINES + scroll; line++) {
-                
-
                 iter = file.lines.begin();
                 advance(iter, line);
-                std::string temp = char_vec_to_string(*iter);
+                
+                if (cfg->show_line_number) {
+                    temp = char_vec_to_string_counted(*iter, current_line);
+                } else {
+                    temp = char_vec_to_string(*iter);
+                }
                 const char* str_to_print = temp.c_str();
                 print_text(str_to_print, count, current_line-scroll);
                 count++;
