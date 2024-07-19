@@ -10,7 +10,7 @@
 #define BUFFER_SIZE 1025    //Notepad's line limit + \0
 #define MAX_BOTTOM_SIZE 28
 
-#define VERSION "Notepad3DS Version 1.1.3"
+#define VERSION "Notepad3DS Version 1.1.4"
 
 
 PrintConsole topScreen, bottomScreen;
@@ -148,21 +148,22 @@ int main(int argc, char **argv)
             memset(mybuf, '\0', BUFFER_SIZE);
 
             //Get file name
-           
-            swkbdSetHintText(&swkbd, "Input filename here."); 
+            /*
+                swkbdSetHintText(&swkbd, "Input filename here."); 
             button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
             std::string filename = "";
             for (int i = 0; mybuf[i] != '\0'; i++)
                 filename.push_back(mybuf[i]);
-
+            */
+            
             //Write out characters to file
-            bool success = write_to_file(filename, file);
+            bool success = write_to_file(file.filename, file);
             
             if (success) {
-                print_save_status("File written to " + filename);
-                print_directory_status(filename);
+                print_save_status("File written to " + file.filename);
+                print_directory_status(file.filename);
             } else {
-                print_save_status("Failed to write " + filename);
+                print_save_status("Failed to write " + file.filename);
             }
 
         }

@@ -32,6 +32,7 @@ File open_file(std::string& filename) {
             file.lines.push_back(std::vector<char> {'\n'});
         }
         file.read_success = true;
+        file.filename = filename;
         file_open.close();
     } else {
         file.read_success = false;

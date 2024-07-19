@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 #include <list>
 //File struct to store lines in a file
 //Uses a list of vector<char> to store lines.
@@ -21,6 +22,8 @@ struct File {
     int find(const char* search_term);
 
     int size() {return lines.size();}
+
+    std::string filename;
 
     std::list<std::vector<char>> lines;
     //Used to check if file open was successful
