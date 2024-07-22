@@ -50,18 +50,33 @@ void print_instructions() {
 }
 
 
-std::string char_vec_to_string(std::vector<char>& line) {
+std::string char_vec_to_string(std::vector<char>& line, Config* cfg) {
 
                 std::string temp_str = "";
                 int letters = 0;
 
                 for (const auto& ch : line) {
-                    if (letters != MAX_WIDTH) {
-                        //Store characters to display
-                        temp_str.push_back(ch); 
-                        letters++;
+                    if (letters < MAX_WIDTH) {
+                        switch (ch) {
+                            case '\t':
+                            {
+                                for (unsigned int i = 0; i < cfg->tab_spaces; i++) {
+                                    temp_str.push_back(' ');
+                                }
+                                letters += cfg->tab_spaces;
+                                break;
+                            }
+                            default:
+                            {
+                                //Store characters to display
+                                temp_str.push_back(ch); 
+                                letters++;
+                                break;
+                            }
+                        }
                     } else {
-                        //Too much text, display new line
+                        //Too much text, truncate and display new line
+                        temp_str.resize(MAX_WIDTH);
                         temp_str.push_back('\n');
                         break;
                     }
@@ -69,15 +84,15 @@ std::string char_vec_to_string(std::vector<char>& line) {
                 return temp_str;
 }
 
-std::string char_vec_to_string_counted(std::vector<char>& line, unsigned int curr_line) {
+std::string char_vec_to_string_counted(std::vector<char>& line, unsigned int curr_line, Config* cfg) {
     std::string temp_str(std::to_string(curr_line) + '|');
-    temp_str.append(char_vec_to_string(line));
+    temp_str.append(char_vec_to_string(line, cfg));
     
-    while (temp_str.length() > MAX_WIDTH) {
-        temp_str.pop_back();
+    if (temp_str.length() > MAX_WIDTH)
+    {
+        temp_str.resize(MAX_WIDTH);
+        temp_str.push_back('\n');
     }
-    
-    temp_str.push_back('\n');
     
     return temp_str;
 }
@@ -144,13 +159,12 @@ void update_screen(File& file, unsigned int current_line, Config* cfg) {
     if (file.lines.size() - 1 <= MAX_LINES) {
         for (auto iter = file.lines.begin(); iter != file.lines.end(); iter++) {
             //Print everything in the vector<char> that iterator points to
-
-            
             
             if (cfg->show_line_number) {
-                temp = char_vec_to_string_counted(*iter, current_line);
+                unsigned int line_cnt = std::distance(file.lines.begin(), iter);
+                temp = char_vec_to_string_counted(*iter, line_cnt, cfg);
             } else {
-                temp = char_vec_to_string(*iter);
+                temp = char_vec_to_string(*iter, cfg);
             }
 
             const char* str_to_print = temp.c_str();
@@ -176,9 +190,10 @@ void update_screen(File& file, unsigned int current_line, Config* cfg) {
                 advance(iter, line);
                 
                 if (cfg->show_line_number) {
-                    temp = char_vec_to_string_counted(*iter, current_line);
+                    unsigned int line_cnt = std::distance(file.lines.begin(), iter);
+                    temp = char_vec_to_string_counted(*iter, line_cnt, cfg);
                 } else {
-                    temp = char_vec_to_string(*iter);
+                    temp = char_vec_to_string(*iter, cfg);
                 }
                 const char* str_to_print = temp.c_str();
                 print_text(str_to_print, count, current_line);
@@ -191,9 +206,10 @@ void update_screen(File& file, unsigned int current_line, Config* cfg) {
                 advance(iter, line);
                 
                 if (cfg->show_line_number) {
-                    temp = char_vec_to_string_counted(*iter, current_line);
+                    unsigned int line_cnt = std::distance(file.lines.begin(), iter);
+                    temp = char_vec_to_string_counted(*iter, line_cnt, cfg);
                 } else {
-                    temp = char_vec_to_string(*iter);
+                    temp = char_vec_to_string(*iter, cfg);
                 }
                 const char* str_to_print = temp.c_str();
                 print_text(str_to_print, count, current_line-scroll);

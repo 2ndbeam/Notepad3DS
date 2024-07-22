@@ -15,6 +15,7 @@ void load_config(Config* cfg, std::string* err_msg) {
             std::string_view path{CONFIG_LOCATION};
             raw_cfg = toml::parse_file(path);
             cfg->show_line_number = raw_cfg["general"]["show_line_number"].value_or(false);
+            cfg->tab_spaces = raw_cfg["general"]["tab_spaces"].value_or(4);
         } catch (const toml::parse_error& err) {
             *err_msg = "Could not parse config.toml.";
             return;

@@ -44,6 +44,6 @@ void print_version(std::string version);
 
 void print_commands_help();
 
-std::string char_vec_to_string(std::vector<char>& line);
+std::string char_vec_to_string(std::vector<char>& line, Config* cfg);
 
-std::string char_vec_to_string_counted(std::vector<char>& line, unsigned int curr_line);
+std::string char_vec_to_string_counted(std::vector<char>& line, unsigned int curr_line, Config* cfg);
