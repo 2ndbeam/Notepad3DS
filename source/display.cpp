@@ -60,6 +60,11 @@ std::string char_vec_to_string(std::vector<char>& line, Config* cfg) {
                         switch (ch) {
                             case '\t':
                             {
+                                if (cfg->tab_spaces == 0) {
+                                    temp_str.push_back(ch);
+                                    letters++;
+                                    break;
+                                }
                                 for (unsigned int i = 0; i < cfg->tab_spaces; i++) {
                                     temp_str.push_back(' ');
                                 }
