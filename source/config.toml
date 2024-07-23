@@ -1,8 +1,18 @@
 # Notepad3DS config. Should lie next to .3dsx
 [general]
+
 # Enables line counter next to each line
 show_line_number = true
+
 # If set to 0, doesn't replace tabs with spaces,
 # though it may break printing with
 # show_line_number = true
 tab_spaces = 4
+
+# Routes of latest opened files
+[latest]
+
+0 = ""
+1 = ""
+2 = ""
+3 = ""

@@ -48,8 +48,8 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations \
 
 CFLAGS	+=	$(INCLUDE) -D__3DS__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=gnu++20
-#-fno-exceptions
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=gnu++20 -fno-exceptions
+
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
