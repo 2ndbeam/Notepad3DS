@@ -22,6 +22,7 @@ bool select_menu = false;
 void move_down(File file, Config* cfg);
 void move_up(File file, Config* cfg);
 void write_file(File file);
+void main_open_file(Config* cfg, std::string filename, File file);
 
 unsigned int curr_line = 0;
 
@@ -184,11 +185,6 @@ int main(int argc, char **argv)
             }
 
             if (kDown & KEY_Y) {
-                //Similar code to pressing X, see about refactoring
-                //Open a file
-                curr_line = 0;
-                scroll = 0;
-                //Clear buffer
                 memset(mybuf, '\0', BUFFER_SIZE);
 
                 //Get file name
@@ -198,28 +194,8 @@ int main(int argc, char **argv)
                 std::string filename = "";
                 for (int i = 0; mybuf[i] != '\0'; i++)
                     filename.push_back(mybuf[i]);
-                File oldfile = file;
-                file = open_file(filename);
-                
-                //print functions here seem to crash the program
-                if (file.read_success) {
-                    update_screen(file, curr_line, &cfg);
-                    clear_save_status();
-                    std::cout << "Successfully opened " << filename << std::endl;
-                    clear_directory_status();
-                    std::cout << "Current file: " << filename;
-                    //print_directory_status(filename);
-                    consoleSelect(&topScreen);
-                    //print_save_status("Successfully opened " + filename);
-                    update_latest(&cfg, filename);
-                } else {
-                    file = oldfile;
-                    update_screen(file, curr_line, &cfg);
-                    clear_save_status();
-                    std::cout << "Failed to open " << filename << std::endl;
-                    consoleSelect(&topScreen);
-                    //print_save_status("Failed to open " + filename);
-                }
+
+                main_open_file(&cfg, filename, file);
             }
 
             if (kDown & KEY_DDOWN) {
@@ -259,6 +235,19 @@ int main(int argc, char **argv)
                     update_screen(file, curr_line, &cfg);
                 } else
                     printf("swkbd event: %d\n", swkbdGetResult(&swkbd));
+            }
+        } else {
+            if (kDown & KEY_DUP) {
+                main_open_file(&cfg, cfg.latest[0].string(), file);
+            }
+            if (kDown & KEY_DLEFT) {
+                main_open_file(&cfg, cfg.latest[1].string(), file);
+            }
+            if (kDown & KEY_DDOWN) {
+                main_open_file(&cfg, cfg.latest[2].string(), file);
+            }
+            if (kDown & KEY_DRIGHT) {
+                main_open_file(&cfg, cfg.latest[3].string(), file);
             }
         }
         if (kDown & KEY_SELECT) {
@@ -323,6 +312,13 @@ void move_up(File file, Config* cfg) {
 }
 
 void write_file(File file) {
+    if (file.filename == "") {
+        clear_save_status();
+        std::cout << "Can't save empty filename" << std::endl;
+        consoleSelect(&topScreen);
+        return;
+    }
+
     bool success = write_to_file(file.filename, file);
     
     if (success) {
@@ -330,5 +326,36 @@ void write_file(File file) {
         print_directory_status(file.filename);
     } else {
         print_save_status("Failed to write " + file.filename);
+    }
+}
+
+void main_open_file(Config* cfg, std::string filename, File file) {
+    if (filename == "") {
+        clear_save_status();
+        std::cout << "Can't open empty file" << std::endl;
+        consoleSelect(&topScreen);
+        return;
+    }
+    
+    curr_line = 0;
+    scroll = 0;
+
+    File oldfile = file;
+    file = open_file(filename);
+    
+    if (file.read_success) {
+        update_screen(file, curr_line, cfg);
+        clear_save_status();
+        std::cout << "Successfully opened " << filename << std::endl;
+        clear_directory_status();
+        std::cout << "Current file: " << filename;
+        consoleSelect(&topScreen);
+        update_latest(cfg, filename);
+    } else {
+        file = oldfile;
+        update_screen(file, curr_line, cfg);
+        clear_save_status();
+        std::cout << "Failed to open " << filename << std::endl;
+        consoleSelect(&topScreen);
     }
 }
