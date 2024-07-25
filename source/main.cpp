@@ -3,6 +3,7 @@
 #include <string.h>
 #include <iostream>
 #include <algorithm>
+#include <filesystem>
 #include "file.h"
 #include "display.h"
 #include "file_io.h"
@@ -16,9 +17,11 @@
 PrintConsole topScreen, bottomScreen;
 int scroll = 0;
 bool fast_scroll = false;
+bool select_menu = false;
 
 void move_down(File file, Config* cfg);
 void move_up(File file, Config* cfg);
+void write_file(File file);
 
 unsigned int curr_line = 0;
 
@@ -130,7 +133,27 @@ int main(int argc, char **argv)
             
             //Clear buffer
             memset(mybuf, '\0', BUFFER_SIZE);
+            
+            swkbdSetHintText(&swkbd, "Input filename here."); 
+            button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
+            std::string filename = "";
+            for (int i = 0; mybuf[i] != '\0'; i++)
+                filename.push_back(mybuf[i]);
+
+            if (filename == "")
+                print_save_status("No new file created");
+            else if (std::filesystem::exists(std::filesystem::path(filename)))
+                print_save_status("File on this path already exists!");
+            else {
+                File new_file;
+                file = new_file;
+                file.filename = filename;
+                curr_line = 0;
+                scroll = 0;
+                write_file(file);
+            }
             //Confirm creating a new file
+            /*
             swkbdSetHintText(&swkbd, "Are you sure you want to open a BLANK file? y/n"); 
             button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
             if (mybuf[0] == 'y') {
@@ -142,6 +165,7 @@ int main(int argc, char **argv)
                 print_save_status("New file created");
             } else
                 print_save_status("No new file created");
+            */
         }
 
         if (kDown & KEY_R) {
@@ -169,29 +193,7 @@ int main(int argc, char **argv)
         fast_scroll = (kHeld & KEY_L);
 
         if (kDown & KEY_X) {
-            //Save current file
-            //Clear buffer
-            memset(mybuf, '\0', BUFFER_SIZE);
-
-            //Get file name
-            /*
-                swkbdSetHintText(&swkbd, "Input filename here."); 
-            button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
-            std::string filename = "";
-            for (int i = 0; mybuf[i] != '\0'; i++)
-                filename.push_back(mybuf[i]);
-            */
-            
-            //Write out characters to file
-            bool success = write_to_file(file.filename, file);
-            
-            if (success) {
-                print_save_status("File written to " + file.filename);
-                print_directory_status(file.filename);
-            } else {
-                print_save_status("Failed to write " + file.filename);
-            }
-
+            write_file(file);
         }
 
         if (kDown & KEY_Y) {
@@ -321,5 +323,16 @@ void move_up(File file, Config* cfg) {
             }
         }
         update_screen(file, curr_line, cfg);
+    }
+}
+
+void write_file(File file) {
+    bool success = write_to_file(file.filename, file);
+            
+    if (success) {
+        print_save_status("File written to " + file.filename);
+        print_directory_status(file.filename);
+    } else {
+        print_save_status("Failed to write " + file.filename);
     }
 }

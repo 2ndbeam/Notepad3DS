@@ -5,13 +5,21 @@
 #include <stdio.h>
 #include <math.h>
 
-void clear_screen() {
+void clear_top() {
     consoleSelect(&topScreen);
     //Cursor to top left
     std::cout << SCREEN_START_POINT;
     //Clear screen with empty lines
     for (int i = 0; i < CLEAR_SCREEN_LINES; i++)
         std::cout << std::string(70, ' ');
+    std::cout << SCREEN_START_POINT;
+}
+
+void clear_bot() {
+    consoleSelect(&bottomScreen);
+    std::cout << SCREEN_START_POINT;
+    for (int i = 0; i < CLEAR_SCREEN_LINES; i++)
+        std::cout << std::string(60, ' ');
     std::cout << SCREEN_START_POINT;
 }
 
@@ -28,14 +36,42 @@ void print_version(std::string version) {
     std::cout << version << std::endl;
 }
 
-// WIP yet
-void print_commands_help() {
-    clear_screen();
-    printf("\n");
+void print_select_instructions(Config* cfg) {
+    // so much code duplication...sad
+    clear_bot();
+    if (cfg->latest[0] != "") {
+        std::string tmp_path(cfg->latest[0]);
+        tmp_path += ";\n";
+        printf("Press DPad Up to open\n");
+        printf(tmp_path.c_str());
+    }
+    
+    if (cfg->latest[1] != "") {
+        std::string tmp_path(cfg->latest[1]);
+        tmp_path += ";\n";
+        printf("Press DPad Left to open\n");
+        printf(tmp_path.c_str());
+    }
+    
+    if (cfg->latest[2] != "") {
+        std::string tmp_path(cfg->latest[2]);
+        tmp_path += ";\n";
+        printf("Press DPad Down to open\n");
+        printf(tmp_path.c_str());
+    }
+
+    if (cfg->latest[3] != "") {
+        std::string tmp_path(cfg->latest[3]);
+        tmp_path += ";\n";
+        printf("Press DPad Right to open\n");
+        printf(tmp_path.c_str());
+    }
+
+    printf("Press SELECT to access main menu\n");
 }
 
 void print_instructions() {
-    consoleSelect(&bottomScreen);
+    clear_bot();
     printf(INSTRUCTION_LINE);
 	printf("Press A to select current line\n");
 	printf("Press B to create a new file\n");
@@ -46,6 +82,7 @@ void print_instructions() {
     printf("Press DPad or CPad to move up/down\n");
     printf("Press DPad Left to create a new line\n");
     printf("Press DPad Right to remove line\n");
+    //printf("Press SELECT to access another menu\n");
 	printf("Press START to exit\n");
 }
 
@@ -90,7 +127,7 @@ std::string char_vec_to_string(std::vector<char>& line, Config* cfg) {
 }
 
 std::string char_vec_to_string_counted(std::vector<char>& line, unsigned int curr_line, Config* cfg) {
-    std::string temp_str(std::to_string(curr_line) + '|');
+    std::string temp_str(std::to_string(curr_line + 1) + '|');
     temp_str.append(char_vec_to_string(line, cfg));
     
     if (temp_str.length() > MAX_WIDTH)
@@ -152,7 +189,7 @@ void print_directory_status(std::string filename) {
 }
 
 void update_screen(File& file, unsigned int current_line, Config* cfg) {
-    clear_screen();
+    clear_top();
     consoleSelect(&bottomScreen);
     print_line_status(current_line);
     consoleSelect(&topScreen);

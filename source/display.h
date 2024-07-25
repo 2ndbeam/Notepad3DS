@@ -21,8 +21,9 @@
 extern PrintConsole topScreen, bottomScreen; 
 extern int scroll;
 
-//Clears everything off the top screen
-void clear_screen();
+//Clears everything off the screen
+void clear_top();
+void clear_bot();
 
 //Updates current selected screen with contents of file
 void update_screen(File& file, unsigned int current_line, Config* cfg);
@@ -42,7 +43,7 @@ void print_instructions();
 
 void print_version(std::string version);
 
-void print_commands_help();
+void print_select_instructions(Config* cfg);
 
 std::string char_vec_to_string(std::vector<char>& line, Config* cfg);
 
