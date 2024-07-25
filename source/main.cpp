@@ -85,194 +85,190 @@ int main(int argc, char **argv)
         swkbdInit(&swkbd, SWKBD_TYPE_NORMAL, 1, -1);
         swkbdSetValidation(&swkbd, SWKBD_ANYTHING, SWKBD_ANYTHING, 2);
         swkbdSetFeatures(&swkbd, SWKBD_DARKEN_TOP_SCREEN);
-
-        if (kDown & KEY_A) {
-            //Select current line for editing
-            swkbdSetHintText(&swkbd, "Input text here.");
-            //Iterator to find current selected line
-            auto line = file.lines.begin();
-            if (curr_line < file.lines.size())
-            {
-                if (curr_line != 0)
-                    advance(line, curr_line);
-                
-                if (curr_line == file.lines.size() - 1) {
-                    file.lines.push_back(std::vector<char>{'\n'});
+        if (!select_menu) {
+            if (kDown & KEY_A) {
+                //Select current line for editing
+                swkbdSetHintText(&swkbd, "Input text here.");
+                //Iterator to find current selected line
+                auto line = file.lines.begin();
+                if (curr_line < file.lines.size())
+                {
+                    if (curr_line != 0)
+                        advance(line, curr_line);
+                    
+                    if (curr_line == file.lines.size() - 1) {
+                        file.lines.push_back(std::vector<char>{'\n'});
+                    }
+                    //Need a char array to output to keyboard
+                    char current_text[BUFFER_SIZE] = "";
+                    copy(line->begin(), line->end(), current_text);
+                    swkbdSetInitialText(&swkbd, current_text);
                 }
-                //Need a char array to output to keyboard
-                char current_text[BUFFER_SIZE] = "";
-                copy(line->begin(), line->end(), current_text);
-                swkbdSetInitialText(&swkbd, current_text);
+                didit = true;
+                button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
             }
-            didit = true;
-            button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
-        }
 
-        if (kDown & KEY_DLEFT) {
-            if (curr_line < file.lines.size()) {
-                auto line = file.lines.begin();
-                advance(line, curr_line + 1);
-                file.lines.insert(line, std::vector<char>{'\n'});
-                curr_line++;
-                update_screen(file, curr_line, &cfg);
+            if (kDown & KEY_DLEFT) {
+                if (curr_line < file.lines.size()) {
+                    auto line = file.lines.begin();
+                    advance(line, curr_line + 1);
+                    file.lines.insert(line, std::vector<char>{'\n'});
+                    curr_line++;
+                    update_screen(file, curr_line, &cfg);
+                }
             }
-        }
 
-        if (kDown & KEY_DRIGHT) {
-            if (curr_line < file.lines.size()) {
-                auto line = file.lines.begin();
-                if (curr_line > 0)
-                    advance(line, curr_line);
-                file.lines.erase(line);
-                update_screen(file, curr_line, &cfg);
+            if (kDown & KEY_DRIGHT) {
+                if (curr_line < file.lines.size()) {
+                    auto line = file.lines.begin();
+                    if (curr_line > 0)
+                        advance(line, curr_line);
+                    file.lines.erase(line);
+                    update_screen(file, curr_line, &cfg);
+                }
             }
-        }
 
-        if (kDown & KEY_B) {
-            //Create new file
-            
-            //Clear buffer
-            memset(mybuf, '\0', BUFFER_SIZE);
-            
-            swkbdSetHintText(&swkbd, "Input filename here."); 
-            button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
-            std::string filename = "";
-            for (int i = 0; mybuf[i] != '\0'; i++)
-                filename.push_back(mybuf[i]);
+            if (kDown & KEY_B) {
+                //Create new file
+                
+                //Clear buffer
+                memset(mybuf, '\0', BUFFER_SIZE);
+                
+                swkbdSetHintText(&swkbd, "Input filename here."); 
+                button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
+                std::string filename = "";
+                for (int i = 0; mybuf[i] != '\0'; i++)
+                    filename.push_back(mybuf[i]);
 
-            if (filename == "")
-                print_save_status("No new file created");
-            else if (std::filesystem::exists(std::filesystem::path(filename)))
-                print_save_status("File on this path already exists!");
-            else {
-                File new_file;
-                file = new_file;
-                file.filename = filename;
-                curr_line = 0;
-                scroll = 0;
+                if (filename == "")
+                    print_save_status("No new file created");
+                else if (std::filesystem::exists(std::filesystem::path(filename)))
+                    print_save_status("File on this path already exists!");
+                else {
+                    File new_file;
+                    file = new_file;
+                    file.filename = filename;
+                    curr_line = 0;
+                    scroll = 0;
+                    write_file(file);
+                    update_screen(file, curr_line, &cfg);
+                }
+            }
+
+            if (kDown & KEY_R) {
+                //find a thing
+                
+                //Clear buffer
+                memset(mybuf, '\0', BUFFER_SIZE);
+                //Get term to search for
+                swkbdSetHintText(&swkbd, "Input search term here."); 
+                button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
+                int line = file.find(mybuf);
+                if (line < 0)
+                    printf("Could not find %s", mybuf);
+                else {
+                    printf("Found %s at %d", mybuf, line);
+                    curr_line = line;
+                    if (curr_line > MAX_BOTTOM_SIZE) {
+                        scroll = curr_line - MAX_BOTTOM_SIZE;
+                    }
+                    update_screen(file, curr_line, &cfg);
+                }   
+
+            }
+
+            fast_scroll = (kHeld & KEY_L);
+
+            if (kDown & KEY_X) {
                 write_file(file);
             }
-            //Confirm creating a new file
-            /*
-            swkbdSetHintText(&swkbd, "Are you sure you want to open a BLANK file? y/n"); 
-            button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
-            if (mybuf[0] == 'y') {
-                File blankFile;
-                file = blankFile;
+
+            if (kDown & KEY_Y) {
+                //Similar code to pressing X, see about refactoring
+                //Open a file
                 curr_line = 0;
                 scroll = 0;
-                update_screen(file, curr_line, &cfg);
-                print_save_status("New file created");
-            } else
-                print_save_status("No new file created");
-            */
-        }
+                //Clear buffer
+                memset(mybuf, '\0', BUFFER_SIZE);
 
-        if (kDown & KEY_R) {
-            //find a thing
+                //Get file name
             
-            //Clear buffer
-            memset(mybuf, '\0', BUFFER_SIZE);
-            //Get term to search for
-            swkbdSetHintText(&swkbd, "Input search term here."); 
-            button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
-            int line = file.find(mybuf);
-            if (line < 0)
-                printf("Could not find %s", mybuf);
-            else {
-                printf("Found %s at %d", mybuf, line);
-                curr_line = line;
-                if (curr_line > MAX_BOTTOM_SIZE) {
-                    scroll = curr_line - MAX_BOTTOM_SIZE;
+                swkbdSetHintText(&swkbd, "Input filename here."); 
+                button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
+                std::string filename = "";
+                for (int i = 0; mybuf[i] != '\0'; i++)
+                    filename.push_back(mybuf[i]);
+                File oldfile = file;
+                file = open_file(filename);
+                
+                //print functions here seem to crash the program
+                if (file.read_success) {
+                    update_screen(file, curr_line, &cfg);
+                    clear_save_status();
+                    std::cout << "Successfully opened " << filename << std::endl;
+                    clear_directory_status();
+                    std::cout << "Current file: " << filename;
+                    //print_directory_status(filename);
+                    consoleSelect(&topScreen);
+                    //print_save_status("Successfully opened " + filename);
+                    update_latest(&cfg, filename);
+                } else {
+                    file = oldfile;
+                    update_screen(file, curr_line, &cfg);
+                    clear_save_status();
+                    std::cout << "Failed to open " << filename << std::endl;
+                    consoleSelect(&topScreen);
+                    //print_save_status("Failed to open " + filename);
                 }
-                update_screen(file, curr_line, &cfg);
-            }   
+            }
 
-        }
+            if (kDown & KEY_DDOWN) {
+                //Move a line down (towards bottom of screen)
+                move_down(file, &cfg); 
+            }
 
-        fast_scroll = (kHeld & KEY_L);
+            if (kHeld & KEY_CPAD_DOWN) {
+                //Move a line down (towards bottom of screen)
+                //as long as down is held
+                move_down(file, &cfg); 
+            }
+            if (kDown & KEY_DUP) {
+                //Move a line up (towards top of screen)
+                move_up(file, &cfg);
+            }
 
-        if (kDown & KEY_X) {
-            write_file(file);
-        }
 
-        if (kDown & KEY_Y) {
-            //Similar code to pressing X, see about refactoring
-            //Open a file
-            curr_line = 0;
-            scroll = 0;
-            //Clear buffer
-            memset(mybuf, '\0', BUFFER_SIZE);
+            if (kHeld & KEY_CPAD_UP) {
+                //Move a line up (towards top of screen)
+                //as long as up is held
+                move_up(file, &cfg);
+            }
 
-            //Get file name
-           
-            swkbdSetHintText(&swkbd, "Input filename here."); 
-            button = swkbdInputText(&swkbd, mybuf, sizeof(mybuf));
-            std::string filename = "";
-            for (int i = 0; mybuf[i] != '\0'; i++)
-                filename.push_back(mybuf[i]);
-            File oldfile = file;
-            file = open_file(filename);
-            
-            //print functions here seem to crash the program
-            if (file.read_success) {
-                update_screen(file, curr_line, &cfg);
-                clear_save_status();
-                std::cout << "Successfully opened " << filename << std::endl;
-                clear_directory_status();
-                std::cout << "Current file: " << filename;
-                //print_directory_status(filename);
-                consoleSelect(&topScreen);
-                //print_save_status("Successfully opened " + filename);
-            } else {
-                file = oldfile;
-                update_screen(file, curr_line, &cfg);
-                clear_save_status();
-                std::cout << "Failed to open " << filename << std::endl;
-                consoleSelect(&topScreen);
-                //print_save_status("Failed to open " + filename);
+            if (didit)
+            {
+                if (button != SWKBD_BUTTON_NONE)
+                {
+                    std::vector<char> new_text = char_arr_to_vector(mybuf);
+
+                    if (curr_line >= file.lines.size()) {
+                        //Empty line, add a new one.
+                        file.add_line(new_text);
+                    } else {
+                        file.edit_line(new_text, curr_line);
+                    }
+                    update_screen(file, curr_line, &cfg);
+                } else
+                    printf("swkbd event: %d\n", swkbdGetResult(&swkbd));
             }
         }
-
-        if (kDown & KEY_DDOWN) {
-            //Move a line down (towards bottom of screen)
-            move_down(file, &cfg); 
+        if (kDown & KEY_SELECT) {
+            select_menu = !select_menu;
+            if (select_menu) {
+                print_select_instructions(&cfg);
+            } else {
+                print_instructions();
+            }
         }
-
-        if (kHeld & KEY_CPAD_DOWN) {
-            //Move a line down (towards bottom of screen)
-            //as long as down is held
-            move_down(file, &cfg); 
-        }
-        if (kDown & KEY_DUP) {
-            //Move a line up (towards top of screen)
-            move_up(file, &cfg);
-        }
-
-
-        if (kHeld & KEY_CPAD_UP) {
-            //Move a line up (towards top of screen)
-            //as long as up is held
-            move_up(file, &cfg);
-        }
-
-
-		if (didit)
-		{
-			if (button != SWKBD_BUTTON_NONE)
-			{
-                std::vector<char> new_text = char_arr_to_vector(mybuf);
-
-                if (curr_line >= file.lines.size()) {
-                    //Empty line, add a new one.
-                    file.add_line(new_text);
-                } else {
-                    file.edit_line(new_text, curr_line);
-                }
-                update_screen(file, curr_line, &cfg);
-			} else
-				printf("swkbd event: %d\n", swkbdGetResult(&swkbd));
-		}
 
 		// Flush and swap framebuffers
 		gfxFlushBuffers();
@@ -328,7 +324,7 @@ void move_up(File file, Config* cfg) {
 
 void write_file(File file) {
     bool success = write_to_file(file.filename, file);
-            
+    
     if (success) {
         print_save_status("File written to " + file.filename);
         print_directory_status(file.filename);

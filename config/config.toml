@@ -8,11 +8,3 @@ show_line_number = true
 # though it may break printing with
 # show_line_number = true
 tab_spaces = 4
-
-# Routes of latest opened files
-[latest]
-
-0 = ""
-1 = ""
-2 = ""
-3 = ""

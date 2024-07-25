@@ -82,7 +82,7 @@ void print_instructions() {
     printf("Press DPad or CPad to move up/down\n");
     printf("Press DPad Left to create a new line\n");
     printf("Press DPad Right to remove line\n");
-    //printf("Press SELECT to access another menu\n");
+    printf("Press SELECT to access another menu\n");
 	printf("Press START to exit\n");
 }
 

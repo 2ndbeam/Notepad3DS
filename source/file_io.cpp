@@ -9,6 +9,7 @@ bool write_to_file(std::string& filename, File& file) {
             new_file << ch;
     }
     new_file.close();
+
     if (new_file.bad())
         return false;
     return true;
